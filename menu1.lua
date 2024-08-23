@@ -40,7 +40,7 @@ function menu1.mousepressed(x, y, button)
     if button == 1 then -- Left mouse button
         if x >= buttons.play.x and x <= buttons.play.x + buttons.play.width and
            y >= buttons.play.y and y <= buttons.play.y + buttons.play.height then
-            scene = "game"
+            scene = "menu3"
             love.load()
         elseif x >= buttons.exit.x and x <= buttons.exit.x + buttons.exit.width and
                y >= buttons.exit.y and y <= buttons.exit.y + buttons.exit.height then

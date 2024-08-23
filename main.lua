@@ -2,6 +2,7 @@
 require "collision"
 
 -- L'Herbe
+blocks = {}
 block = love.graphics.newImage("Library/Grass.jpg")
 background = love.graphics.newImage("Library/background.jpg")
 blockWidth = block:getWidth()
@@ -33,7 +34,7 @@ player.gravity = 800    -- Gravité (positive pour descendre)
 player.img = love.graphics.newImage("Library/rabbit.png")
 player.width = player.img:getWidth()  -- Largeur du personnage
 player.height = player.img:getHeight()  -- Hauteur du personnage
-player.posX = 400  -- Position horizontale initiale
+player.posX = 500  -- Position horizontale initiale
 player.posY = love.graphics.getHeight() - blockHeight - player.height  -- Position verticale initiale
 player.velocityY = 0  -- Vitesse verticale initiale
 player.isJumping = false
@@ -63,13 +64,14 @@ musicPlaying = true
 
 -- Variable pour le level
 affiche_message_level = false
-LevelTimer = 20
+LevelTimer = 10
 Level = 0 
 
 -- variable require pour les menues
  scene = "menu1"
  menu1 = require "menu1"
  menu2 = require "menu2"
+ menu3 = require "menu3"
 
 -- GESTION CHARGEMENT, MUSIQUE & SPAWNES
 ---------------------------------------------------------------------------------------------------------
@@ -86,6 +88,7 @@ function love.load()
     spawnOiseau()
     menu1.load()
     menu2.load()
+    menu3.load()
 end
 
 -- Fonction pour une nouvelle carotte
@@ -96,6 +99,7 @@ function spawnCarrot()
         y = love.math.random(0, love.graphics.getHeight() - carrotes.img:getHeight()),
         scale = 0.3 -- Taille aléatoire
     })
+    end 
 end
 
 -- Fonction pour un nouvel oiseau
@@ -115,15 +119,15 @@ function spawnOiseau()
     end
 end
 
-function moveRight(dt)
+function moveRight(dt) -- fonction pour se déplacer à droite
     player.posX = player.posX + player.speed * dt
 end
 
-function moveLeft(dt)
+function moveLeft(dt) -- fonction pour se déplacer à gauche
     player.posX = player.posX - player.speed * dt
 end
 
-function jump()
+function jump() -- fonction pour sauter
     if not player.isJumping and not showMessage then
         player.velocityY = player.jumpForce
         player.isJumping = true
@@ -135,7 +139,7 @@ end
 
 function love.update(dt)
 
-       if scene == "game" then
+    if scene == "game" then
 
     -- Mets a jours le défilement du sol
     groundX = groundX - scrollSpeed * dt
@@ -168,13 +172,37 @@ function love.keypressed(key)
     end
 end
 
-function love.keyreleased(key)
-    if scene == "game" then
-        if key == "right" or key == "left" then
-            -- Arrêter le mouvement horizontal lorsque la touche est relâchée
+
+-- GESTION OPTIMISATION : DECHARGEMENT DE L'ECRAN
+----------------------------------------------------------------------------------------------------
+    
+
+    -- Supprimer les carottes sorties de l'écran
+    for i = #carrotes, 1, -1 do
+        local car = carrotes[i]
+        if car.x < -carrotes.img:getWidth() then
+            table.remove(carrotes, i)
         end
     end
-end
+
+    -- Supprimer et libérer la mémoire des images de carotte sorties de l'écran
+    for i, car in ipairs(carrotes) do
+        if car.x < -carrotes.img:getWidth() then
+            carrotes.img:release()
+            table.remove(carrotes, i)
+        end
+    end
+
+        -- Supprimer et libérer la mémoire de l'herbe sorti de l'écran
+    local newBlockWidth = blockWidth * 0.5
+    for i = #blocks, 1, -1 do
+        local block = blocks[i]
+        if block.x + newBlockWidth < 0 then
+            table.remove(blocks, i)
+            block.img:release()
+        end
+    end
+
 -- GESTION DU SOLE & OISEAU, SPAWNES & LEVEL
 ----------------------------------------------------------------------------------------------------
     -- Gestion des oiseaux
@@ -205,18 +233,42 @@ end
 
 -- Gestion des level
 --------------------------------------------------------------------------------------------
-    affiche_message_level = true -- l'affichage du niveau
+affiche_message_level = true -- l'affichage du niveau
 
+if difficulties == "hard" then 
+    scrollSpeed = 220
+end 
+
+if difficulties == "medium" then 
+    scrollSpeed = 180
+    oiseau.maximum = 2
+end 
+
+if difficulties == "easy" then 
+    scrollSpeed = 110
+end 
+
+
+if difficulties == "hard" then 
     if affiche_message_level then 
         LevelTimer = LevelTimer - dt 
         if LevelTimer <= 0 then 
             Level = Level + 1 -- passe au niveau sup
             oiseau.maximum = oiseau.maximum + 1 -- ajoute 1 oiseau a chaque niveau sup
             scrollSpeed = scrollSpeed + 20 -- augmente la vitesse a chaque niveau sup
-            LevelTimer = 20 -- le timer avant le prochain niveau
+            LevelTimer = 10 -- le timer avant le prochain niveau
+        end 
     end 
 end
----------------------------------------------------------------------------------
+
+-- Appliquer l'effet de boucle horizontal
+if player.posX > love.graphics.getWidth() then
+    player.posX = -player.width
+elseif player.posX < -player.width then
+    player.posX = love.graphics.getWidth()
+end
+
+------------------------------------------------------------------------------------------------
 -- GESTION MORT DU PERSONNAGE
 for j, bird in ipairs(oiseaux) do
     if checkCollision(bird.x, bird.y, oiseau.frameWidth, oiseau.frameHeight, player.posX, player.posY, player.width, player.height) then
@@ -315,6 +367,8 @@ end
         menu1.update(dt)
     elseif scene == "menu2" then
         menu2.update(dt)
+    elseif scene == "menu3" then
+        menu3.update(dt)
     end
 end
 
@@ -322,7 +376,7 @@ end
 -- GRAPHISME/AFFICHAGE/LE DESSIN
 -------------------------------------------------------------------------------------------------------------
 function love.draw()
-     if scene == "game" then
+  if scene == "game" then
     -- Dessinez le fond
     love.graphics.draw(background)
 
@@ -333,9 +387,26 @@ function love.draw()
     love.graphics.draw(imageHautGauche, 10, 5, 0, 0.5, 0.5) -- X, Y, R
 
     -- Dessine le niveau.
-    love.graphics.print("Level", 500, 30)
-    love.graphics.print(tostring(Level), 625, 30)  
+    if difficulties == "hard" then
+        love.graphics.print("Level:", 675, 80, 0, 0.8, 0.8)
+        love.graphics.print(tostring(Level), 775, 80, 0, 0.8, 0.8) 
+    end  
+ 
 
+    -- Dessine le niveau de Difficultée ainsi que la couleurs de la difficultée.
+    love.graphics.print("Difficulties:", 675, 30, 0, 0.8, 0.8)
+
+    if difficulties == "hard" then 
+        love.graphics.setColor(1, 0.3, 0)
+    elseif difficulties == "medium" then 
+        love.graphics.setColor(1, 0.8, 0)
+    else love.graphics.setColor(0, 1, 0)
+
+    end 
+    love.graphics.print(tostring(difficulties), 860, 30, 0, 0.8, 0.8)
+    love.graphics.setColor(1, 1, 1)
+
+------------------------------------------------------------------------------------------------------
     -- AFFFICHAGE ARBRES & NUAGES
     -- Nuages
 
@@ -384,6 +455,8 @@ end
         menu1.draw()
     elseif scene == "menu2" then
         menu2.draw()
+    elseif scene == "menu3" then
+        menu3.draw()
     end
 end
 
@@ -394,7 +467,9 @@ function love.mousepressed(x, y, button)
         menu1.mousepressed(x, y, button)
     elseif scene == "menu2" then
         menu2.mousepressed(x, y, button)
+    elseif scene == "menu3" then
+        menu3.mousepressed(x, y, button)
     end
-end
 end 
+
 -- Made by Louloubiwan, Hugo Gillot Fallone
