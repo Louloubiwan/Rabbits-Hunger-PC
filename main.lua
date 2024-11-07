@@ -150,11 +150,11 @@ function love.update(dt)
     end
 
     if not showMessage then
-        if love.keyboard.isDown("right") then
+        if love.keyboard.isDown("right") or love.keyboard.isDown("d") then
                 moveRight(dt)
-        elseif love.keyboard.isDown("left") then
+        elseif love.keyboard.isDown("left") or love.keyboard.isDown("q") then
                 moveLeft(dt)
-        elseif love.keyboard.isDown("space") then
+        elseif love.keyboard.isDown("space") or love.keyboard.isDown("z") then
                 jump(dt)
         end
     end
