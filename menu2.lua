@@ -27,10 +27,10 @@ function menu2.draw()
     love.graphics.print("- Kenney (Rabbit's Disign)", 235, 575, 0, 0.7, 0.7)
     love.graphics.print("- iB3n [benji] (Sound Design)", 235, 615, 0, 0.7, 0.7)
     love.graphics.print("made by Louloubiwan, project start on the 13/08/2023", 235, 660, 0, 0.8, 0.8)
-    love.graphics.setColor(1, 1, 1)
+    love.graphics.setColor(1, 0.3, 0)
     love.graphics.rectangle("fill", backButton.x, backButton.y, backButton.width, backButton.height)
     love.graphics.setColor(0, 0, 0)
-    love.graphics.print("Back", backButton.x + 25, backButton.y + 5)
+    love.graphics.print("Back", backButton.x + 10, backButton.y + 5)
 end
 
 function menu2.mousepressed(x, y, button)

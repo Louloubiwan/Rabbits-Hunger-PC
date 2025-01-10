@@ -104,7 +104,7 @@ end
 
 -- Fonction pour un nouvel oiseau
 function spawnOiseau()
-    if #oiseaux < oiseau.maximum then  -- Vérifiez le nombre d'oiseaux avant d'en ajouter un nouveau
+    if #oiseaux < oiseau.maximum and not showMessage then  -- Vérifiez le nombre d'oiseaux avant d'en ajouter un nouveau
         local startX = love.math.random(-0, -2000)-- Démarre depuis la gauche de l'écran
         local startY = love.math.random(0, 550)
         table.insert(oiseaux, {
@@ -246,6 +246,7 @@ end
 
 if difficulties == "easy" then 
     scrollSpeed = 110
+    oiseau.maximum = 1
 end 
 
 
